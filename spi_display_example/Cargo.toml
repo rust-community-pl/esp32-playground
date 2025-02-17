@@ -1,5 +1,5 @@
 [package]
-name = "esp32-playground"
+name = "esp32-spi-display"
 version = "0.1.0"
 authors = ["Jagoda Estera Ślązak <jslazak@jslazak.com>"]
 edition = "2021"
@@ -7,7 +7,7 @@ resolver = "2"
 rust-version = "1.77"
 
 [[bin]]
-name = "esp32-playground"
+name = "esp32-spi-display"
 harness = false # do not use the built in cargo test harness -> resolve rust-analyzer errors
 
 [profile.release]
