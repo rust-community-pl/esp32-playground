@@ -92,6 +92,7 @@ fn main() -> anyhow::Result<()> {
     let mut question_id = Default::default();
     let mut question_text = Default::default();
     let mut options: Vec<String> = Default::default();
+    let mut selection: u8 = 0;
 
     let header_text_bounds = Rectangle::new(
         Point::zero(),
@@ -129,7 +130,7 @@ fn main() -> anyhow::Result<()> {
                     );
                     text_box.draw(&mut display).unwrap();
                     for (idx, option) in options.iter().enumerate() {
-                        let selected = idx == 0;
+                        let selected = idx as u8 == selection;
                         Text::new(
                             format!("{} {}", if selected { ">" } else { " " }, option).as_str(),
                             Point::new(0, 20 * idx as i32 + DISPLAY_SIZE.1 as i32 / 2),
@@ -144,6 +145,10 @@ fn main() -> anyhow::Result<()> {
                     }
                 }
                 DeviceEvent::Select { data } => {
+                    selection = data;
+                    if question_id.is_empty() {
+                        continue;
+                    }
                     // TODO: duplicate, move to display module
                     Rectangle::new(
                         Point::new(0, (DISPLAY_SIZE.1 / 2 - 12).into()),
@@ -152,7 +157,7 @@ fn main() -> anyhow::Result<()> {
                     .draw_styled(&PrimitiveStyle::with_fill(Rgb565::BLACK), &mut display)
                     .unwrap();
                     for (idx, option) in options.iter().enumerate() {
-                        let selected = idx as u8 == data;
+                        let selected = idx as u8 == selection;
                         Text::new(
                             format!("{} {}", if selected { ">" } else { " " }, option).as_str(),
                             Point::new(0, 20 * idx as i32 + DISPLAY_SIZE.1 as i32 / 2),
@@ -167,7 +172,7 @@ fn main() -> anyhow::Result<()> {
                     }
                 }
                 DeviceEvent::Enter { data } => {
-                    if question_id.len() == 0 {
+                    if question_id.is_empty() {
                         continue;
                     }
                     // TODO: add device id (from MAC?)

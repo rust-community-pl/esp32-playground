@@ -83,7 +83,6 @@ impl<'controls, SELECT: InputPin, ENTER: InputPin> Controls<'controls, SELECT, E
                                     data: self.selection,
                                 })
                                 .unwrap();
-                            self.selection = 0;
                             // GPIO35 has no pull up resistor, this helps not to send multiple events
                             thread::sleep(Duration::from_millis(500))
                         }
