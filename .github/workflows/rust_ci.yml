@@ -10,6 +10,11 @@ on:
 env:
   CARGO_TERM_COLOR: always
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  WIFI_SSID: "test"
+  WIFI_PASSWORD: "test"
+  MQTT_BROKER_URL: "mqtts://example.com"
+  MQTT_USER: "test"
+  MQTT_PASSWORD: "test"
 
 jobs:
   rust-checks:
@@ -42,4 +47,5 @@ jobs:
       - name: Run command
         run: |
           cd ${{ matrix.dir }}
+          
           cargo ${{ matrix.action.command }} ${{ matrix.action.args }}
