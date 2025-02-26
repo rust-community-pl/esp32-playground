@@ -34,9 +34,9 @@ impl<'controls, SELECT: InputPin, ENTER: InputPin> Controls<'controls, SELECT, E
         })
     }
 
-    pub fn spawn_thread<'scope, 'env>(
+    pub fn spawn_thread<'scope>(
         mut self,
-        scope: &'scope Scope<'scope, 'env>,
+        scope: &'scope Scope<'scope, '_>,
         sender: mpsc::Sender<DeviceEvent>,
     ) -> Result<ScopedJoinHandle<'scope, ()>, std::io::Error>
     where
@@ -44,7 +44,7 @@ impl<'controls, SELECT: InputPin, ENTER: InputPin> Controls<'controls, SELECT, E
     {
         thread::Builder::new()
             .stack_size(6000)
-            .spawn_scoped(&scope, move || {
+            .spawn_scoped(scope, move || {
                 let notification = Notification::new();
                 let notifier_select = notification.notifier();
                 let notifier_enter = notification.notifier();

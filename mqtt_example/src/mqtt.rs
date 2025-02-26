@@ -23,30 +23,28 @@ pub fn configure() -> anyhow::Result<(EspMqttClient<'static>, EspMqttConnection)
     Ok((mqtt_client, mqtt_connection))
 }
 
-pub fn spawn_receiver_thread<'scope, 'env>(
-    scope: &'scope Scope<'scope, 'env>,
+pub fn spawn_receiver_thread<'scope>(
+    scope: &'scope Scope<'scope, '_>,
     mut mqtt_connection: EspMqttConnection,
     sender: mpsc::Sender<DeviceEvent>,
 ) -> Result<ScopedJoinHandle<'scope, ()>, std::io::Error> {
     thread::Builder::new()
         .stack_size(6000)
-        .spawn_scoped(&scope, move || {
+        .spawn_scoped(scope, move || {
             info!("[MQTT] Listening for messages");
             while let Ok(event) = mqtt_connection.next() {
                 let payload = event.payload();
                 info!("[MQTT] {}", payload);
-                match payload {
-                    EventPayload::Received {
-                        id: _,
-                        topic,
-                        data,
-                        details: _,
-                    } => {
-                        sender
-                            .send(DeviceEvent::from_mqtt_payload(topic.unwrap(), data).unwrap())
-                            .ok();
-                    }
-                    _ => {}
+                if let EventPayload::Received {
+                    id: _,
+                    topic,
+                    data,
+                    details: _,
+                } = payload
+                {
+                    sender
+                        .send(DeviceEvent::from_mqtt_payload(topic.unwrap(), data).unwrap())
+                        .ok();
                 }
             }
             info!("[MQTT] Connection closed");
