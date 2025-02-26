@@ -26,7 +26,8 @@ fn main() -> anyhow::Result<()> {
     let nvs = EspDefaultNvsPartition::take()?;
     let peripherals = Peripherals::take()?;
 
-    let wifi = wifi::configure(&event_loop, &nvs, peripherals.modem)?;
+    let mut wifi = wifi::configure(&event_loop, &nvs, peripherals.modem)?;
+    let device_id = wifi::get_mac(&mut wifi);
     std::mem::forget(wifi);
 
     let (mut mqtt_client, mqtt_connection) = mqtt::configure()?;
@@ -91,8 +92,7 @@ fn main() -> anyhow::Result<()> {
                     if question_id.is_empty() {
                         continue;
                     }
-                    // TODO: add device id (from MAC?)
-                    let payload = format!("{}|{}", question_id, data);
+                    let payload = format!("{}|{}|{}", device_id, question_id, data);
                     mqtt_client.enqueue("answer", QoS::AtLeastOnce, false, payload.as_bytes())?;
 
                     display.clear();

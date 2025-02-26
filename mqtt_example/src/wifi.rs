@@ -4,7 +4,7 @@ use embedded_svc::wifi::{ClientConfiguration, Configuration};
 use esp_idf_svc::eventloop::EspSystemEventLoop;
 use esp_idf_svc::hal::modem::Modem;
 use esp_idf_svc::nvs::EspDefaultNvsPartition;
-use esp_idf_svc::wifi::{BlockingWifi, EspWifi};
+use esp_idf_svc::wifi::{BlockingWifi, EspWifi, WifiDeviceId};
 use log::info;
 
 pub fn configure(
@@ -27,4 +27,9 @@ pub fn configure(
     wifi.wait_netif_up()?;
     info!("[WIFI] Connected");
     Ok(wifi)
+}
+
+pub fn get_mac(wifi: &mut BlockingWifi<EspWifi>) -> String {
+    let mac_bytes = wifi.wifi_mut().get_mac(WifiDeviceId::Sta).unwrap();
+    mac_bytes.map(|b| format!("{:X}", b)).join(":")
 }
