@@ -3,8 +3,8 @@ use embedded_graphics::mono_font::MonoTextStyle;
 use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::prelude::*;
 
-use embedded_text::alignment::HorizontalAlignment;
-use embedded_text::style::{HeightMode, TextBoxStyle, TextBoxStyleBuilder};
+use embedded_text::alignment::{HorizontalAlignment, VerticalAlignment};
+use embedded_text::style::{TextBoxStyle, TextBoxStyleBuilder};
 
 pub const WIFI_SSID: &str = env!("WIFI_SSID");
 pub const WIFI_PASSWORD: &str = env!("WIFI_PASSWORD");
@@ -20,6 +20,6 @@ pub const CHAR_STYLE: MonoTextStyle<Rgb565> = MonoTextStyle::new(&FONT_10X20, Rg
 pub const CHAR_STYLE_SELECTED: MonoTextStyle<Rgb565> =
     MonoTextStyle::new(&FONT_10X20, Rgb565::GREEN);
 pub const TEXTBOX_STYLE: TextBoxStyle = TextBoxStyleBuilder::new()
-    .height_mode(HeightMode::FitToText)
     .alignment(HorizontalAlignment::Left)
+    .vertical_alignment(VerticalAlignment::Middle)
     .build();

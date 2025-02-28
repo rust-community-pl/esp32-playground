@@ -34,7 +34,7 @@ fn main() -> anyhow::Result<()> {
 
     let controls = Controls::new(peripherals.pins.gpio0, peripherals.pins.gpio35)?;
 
-    let mut pixel_buffer = [0_u8; 1024];
+    let mut pixel_buffer = [0_u8; 2048];
     let mut display = QuizDisplay::new(
         peripherals.spi2,
         peripherals.pins.gpio18,
@@ -61,12 +61,13 @@ fn main() -> anyhow::Result<()> {
         std::mem::forget(controls_thread);
 
         mqtt::try_until_subscribed(&mut mqtt_client, "question");
-        mqtt::try_until_subscribed(&mut mqtt_client, "off");
+        mqtt::try_until_subscribed(&mut mqtt_client, "sleep");
+        mqtt::try_until_subscribed(&mut mqtt_client, "winner");
 
         loop {
             let event: DeviceEvent = receiver.recv().unwrap();
             match event {
-                DeviceEvent::Off => {
+                DeviceEvent::Sleep => {
                     display.off();
                 }
                 DeviceEvent::Question { data } => {
@@ -80,6 +81,13 @@ fn main() -> anyhow::Result<()> {
 
                     display.draw_question(&question_text);
                     display.draw_options(&options, selection);
+                }
+                DeviceEvent::Winner { data } => {
+                    if data.into_string() == device_id {
+                        display.clear();
+                        display.on();
+                        display.draw_text(&format!("You won!\n{}", device_id));
+                    }
                 }
                 DeviceEvent::Select { data } => {
                     selection = data;
@@ -96,7 +104,7 @@ fn main() -> anyhow::Result<()> {
                     mqtt_client.enqueue("answer", QoS::AtLeastOnce, false, payload.as_bytes())?;
 
                     display.clear();
-                    display.draw_answer_sent();
+                    display.draw_text("Answer sent!");
 
                     question_id.clear();
                 }

@@ -1,7 +1,7 @@
 use crate::config::{CHAR_STYLE, CHAR_STYLE_SELECTED, DISPLAY_OFFSET, DISPLAY_SIZE, TEXTBOX_STYLE};
 use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::prelude::*;
-use embedded_graphics::primitives::{PrimitiveStyle, Rectangle, StyledDrawable};
+use embedded_graphics::primitives::{Line, PrimitiveStyle, Rectangle, StyledDrawable};
 use embedded_graphics::text::Text;
 use embedded_hal::spi::MODE_3;
 use embedded_text::TextBox;
@@ -30,6 +30,19 @@ where
     display: SpiDisplay<'display, DC, ST7789, RST>,
     backlight: PinDriver<'display, BL, Output>,
 }
+
+pub trait DisplayControls {
+    fn clear(&mut self);
+    fn on(&mut self);
+    fn off(&mut self);
+}
+
+pub trait QuizRenderer {
+    fn draw_question(&mut self, question: &str);
+    fn draw_options(&mut self, options: &[String], selected: u8);
+    fn draw_text(&mut self, text: &str);
+}
+
 impl<'display, DC, RST, BL> QuizDisplay<'display, DC, RST, BL>
 where
     DC: OutputPin,
@@ -87,12 +100,6 @@ where
     }
 }
 
-pub trait DisplayControls {
-    fn clear(&mut self);
-    fn on(&mut self);
-    fn off(&mut self);
-}
-
 impl<DC, RST, BL> DisplayControls for QuizDisplay<'_, DC, RST, BL>
 where
     DC: OutputPin,
@@ -112,10 +119,48 @@ where
     }
 }
 
-pub trait QuizRenderer {
-    fn draw_question(&mut self, question: &str);
-    fn draw_options(&mut self, options: &[String], selected: u8);
-    fn draw_answer_sent(&mut self);
+fn draw_selection_arrow<D>(display: &mut D, y_offset: i32, selected: bool)
+where
+    D: DrawTarget<Color = Rgb565>,
+{
+    if selected {
+        Text::new(">", Point::new(0, y_offset + 25), CHAR_STYLE_SELECTED)
+            .draw(display)
+            .ok();
+    } else {
+        // Draw a black rectangle where the selection arrow is,
+        // so we don't have to re-render the whole screen.
+        Rectangle::new(Point::new(0, y_offset + 6), Size::new(10, 20))
+            .draw_styled(&PrimitiveStyle::with_fill(Rgb565::BLACK), display)
+            .ok();
+    }
+}
+
+fn draw_option<D>(display: &mut D, y_offset: i32, selected: bool, option: &str)
+where
+    D: DrawTarget<Color = Rgb565>,
+{
+    Line::new(
+        Point::new(0, y_offset),
+        Point::new(DISPLAY_SIZE.0.into(), y_offset),
+    )
+    .draw_styled(&PrimitiveStyle::with_stroke(Rgb565::WHITE, 1), display)
+    .ok();
+    TextBox::with_textbox_style(
+        option,
+        Rectangle::new(
+            Point::new(16, y_offset),
+            Size::new((DISPLAY_SIZE.0 - 16).into(), 40),
+        ),
+        if selected {
+            CHAR_STYLE_SELECTED
+        } else {
+            CHAR_STYLE
+        },
+        TEXTBOX_STYLE,
+    )
+    .draw(display)
+    .ok();
 }
 
 impl<DC, RST, BL> QuizRenderer for QuizDisplay<'_, DC, RST, BL>
@@ -129,7 +174,7 @@ where
             question,
             Rectangle::new(
                 Point::zero(),
-                Size::new(DISPLAY_SIZE.0.into(), (DISPLAY_SIZE.1 / 2).into()),
+                Size::new(DISPLAY_SIZE.0.into(), (DISPLAY_SIZE.1 - 160).into()),
             ),
             CHAR_STYLE,
             TEXTBOX_STYLE,
@@ -139,34 +184,17 @@ where
     }
 
     fn draw_options(&mut self, options: &[String], selection: u8) {
-        // Draw a black rectangle where the selection arrow is,
-        // so we don't have to re-render the whole screen.
-        Rectangle::new(
-            Point::new(0, (DISPLAY_SIZE.1 / 2 - 12).into()),
-            Size::new(10, 80),
-        )
-        .draw_styled(&PrimitiveStyle::with_fill(Rgb565::BLACK), &mut self.display)
-        .ok();
-
         for (idx, option) in options.iter().enumerate() {
             let selected = idx as u8 == selection;
-            Text::new(
-                format!("{} {}", if selected { ">" } else { " " }, option).as_str(),
-                Point::new(0, 20 * idx as i32 + DISPLAY_SIZE.1 as i32 / 2),
-                if selected {
-                    CHAR_STYLE_SELECTED
-                } else {
-                    CHAR_STYLE
-                },
-            )
-            .draw(&mut self.display)
-            .ok();
+            let y_offset = 40 * idx as i32 + DISPLAY_SIZE.1 as i32 - 160;
+            draw_selection_arrow(&mut self.display, y_offset, selected);
+            draw_option(&mut self.display, y_offset, selected, option);
         }
     }
 
-    fn draw_answer_sent(&mut self) {
+    fn draw_text(&mut self, text: &str) {
         TextBox::with_textbox_style(
-            "Answer sent!",
+            text,
             Rectangle::new(
                 Point::zero(),
                 Size::new(DISPLAY_SIZE.0.into(), (DISPLAY_SIZE.1 / 2).into()),
