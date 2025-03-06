@@ -4,6 +4,8 @@ use embedded_graphics::prelude::*;
 use embedded_graphics::primitives::{Line, PrimitiveStyle, Rectangle, StyledDrawable};
 use embedded_graphics::text::Text;
 use embedded_hal::spi::MODE_3;
+use embedded_text::alignment::{HorizontalAlignment, VerticalAlignment};
+use embedded_text::style::TextBoxStyleBuilder;
 use embedded_text::TextBox;
 use esp_idf_svc::hal::delay::Ets;
 use esp_idf_svc::hal::gpio::{AnyIOPin, Output, OutputPin, PinDriver};
@@ -41,6 +43,7 @@ pub trait QuizRenderer {
     fn draw_question(&mut self, question: &str);
     fn draw_options(&mut self, options: &[String], selected: u8);
     fn draw_text(&mut self, text: &str);
+    fn draw_battery_level(&mut self, battery_level: Option<u8>);
 }
 
 impl<'display, DC, RST, BL> QuizDisplay<'display, DC, RST, BL>
@@ -112,10 +115,14 @@ where
 
     fn on(&mut self) {
         self.backlight.set_high().ok();
+        let mut delay = Ets;
+        self.display.wake(&mut delay).unwrap();
     }
 
     fn off(&mut self) {
         self.backlight.set_low().ok();
+        let mut delay = Ets;
+        self.display.sleep(&mut delay).unwrap();
     }
 }
 
@@ -173,8 +180,8 @@ where
         TextBox::with_textbox_style(
             question,
             Rectangle::new(
-                Point::zero(),
-                Size::new(DISPLAY_SIZE.0.into(), (DISPLAY_SIZE.1 - 160).into()),
+                Point::new(0, 20),
+                Size::new(DISPLAY_SIZE.0.into(), (DISPLAY_SIZE.1 - 160 - 20).into()),
             ),
             CHAR_STYLE,
             TEXTBOX_STYLE,
@@ -196,11 +203,33 @@ where
         TextBox::with_textbox_style(
             text,
             Rectangle::new(
-                Point::zero(),
-                Size::new(DISPLAY_SIZE.0.into(), (DISPLAY_SIZE.1 / 2).into()),
+                Point::new(0, 20),
+                Size::new(DISPLAY_SIZE.0.into(), (DISPLAY_SIZE.1 / 2 - 20).into()),
             ),
             CHAR_STYLE,
             TEXTBOX_STYLE,
+        )
+        .draw(&mut self.display)
+        .ok();
+    }
+
+    fn draw_battery_level(&mut self, battery_level: Option<u8>) {
+        let bounding_box = Rectangle::new(Point::zero(), Size::new(DISPLAY_SIZE.0.into(), 20));
+        bounding_box
+            .draw_styled(&PrimitiveStyle::with_fill(Rgb565::BLACK), &mut self.display)
+            .ok();
+        let text = match battery_level {
+            Some(level) => format!("bat: {:>3}%", level),
+            None => String::from("charging..."),
+        };
+        TextBox::with_textbox_style(
+            &text,
+            bounding_box,
+            CHAR_STYLE,
+            TextBoxStyleBuilder::new()
+                .alignment(HorizontalAlignment::Right)
+                .vertical_alignment(VerticalAlignment::Top)
+                .build(),
         )
         .draw(&mut self.display)
         .ok();

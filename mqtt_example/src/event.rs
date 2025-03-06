@@ -6,6 +6,8 @@ pub enum DeviceEvent {
     // Button events
     Select { data: u8 },
     Enter { data: u8 },
+    // Battery reader
+    BatteryLevel { data: Option<u8> },
 }
 
 impl DeviceEvent {

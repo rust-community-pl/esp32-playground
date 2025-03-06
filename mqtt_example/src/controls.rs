@@ -43,7 +43,7 @@ impl<'controls, SELECT: InputPin, ENTER: InputPin> Controls<'controls, SELECT, E
         'controls: 'scope,
     {
         thread::Builder::new()
-            .stack_size(6000)
+            .stack_size(8192)
             .spawn_scoped(scope, move || {
                 let notification = Notification::new();
                 let notifier_select = notification.notifier();
@@ -83,11 +83,11 @@ impl<'controls, SELECT: InputPin, ENTER: InputPin> Controls<'controls, SELECT, E
                                     data: self.selection,
                                 })
                                 .unwrap();
-                            // GPIO35 has no pull up resistor, this helps not to send multiple events
-                            thread::sleep(Duration::from_millis(500))
                         }
                         _ => {}
                     }
+                    // GPIO35 has no pull up resistor, this helps not to send multiple events
+                    thread::sleep(Duration::from_millis(500))
                 }
             })
     }

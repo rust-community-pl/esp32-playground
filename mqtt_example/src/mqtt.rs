@@ -15,6 +15,9 @@ pub fn configure() -> anyhow::Result<(EspMqttClient<'static>, EspMqttConnection)
         username: Some(MQTT_USER),
         password: Some(MQTT_PASSWORD),
         crt_bundle_attach: Some(esp_crt_bundle_attach),
+        keep_alive_interval: Some(Duration::from_secs(10)),
+        reconnect_timeout: Some(Duration::from_secs(10)),
+        network_timeout: Duration::from_secs(10),
         ..Default::default()
     };
 
@@ -29,7 +32,7 @@ pub fn spawn_receiver_thread<'scope>(
     sender: mpsc::Sender<DeviceEvent>,
 ) -> Result<ScopedJoinHandle<'scope, ()>, std::io::Error> {
     thread::Builder::new()
-        .stack_size(6000)
+        .stack_size(8192)
         .spawn_scoped(scope, move || {
             info!("[MQTT] Listening for messages");
             while let Ok(event) = mqtt_connection.next() {
@@ -45,6 +48,7 @@ pub fn spawn_receiver_thread<'scope>(
                     sender
                         .send(DeviceEvent::from_mqtt_payload(topic.unwrap(), data).unwrap())
                         .ok();
+                    sleep(Duration::from_millis(500))
                 }
             }
             info!("[MQTT] Connection closed");
