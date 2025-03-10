@@ -204,7 +204,7 @@ where
             text,
             Rectangle::new(
                 Point::new(0, 20),
-                Size::new(DISPLAY_SIZE.0.into(), (DISPLAY_SIZE.1 / 2 - 20).into()),
+                Size::new(DISPLAY_SIZE.0.into(), (DISPLAY_SIZE.1 - 20).into()),
             ),
             CHAR_STYLE,
             TEXTBOX_STYLE,

@@ -3,10 +3,11 @@ pub enum DeviceEvent {
     Sleep,
     Question { data: Box<str> },
     Winner { data: Box<str> },
+    Message { data: Box<str> },
     // Button events
     Select { data: u8 },
     Enter { data: u8 },
-    // Battery reader
+    // Battery reader events
     BatteryLevel { data: Option<u8> },
 }
 
@@ -18,6 +19,9 @@ impl DeviceEvent {
                 data: String::from_utf8_lossy(data).into_owned().into_boxed_str(),
             }),
             "winner" => Some(DeviceEvent::Winner {
+                data: String::from_utf8_lossy(data).into_owned().into_boxed_str(),
+            }),
+            "message" => Some(DeviceEvent::Message {
                 data: String::from_utf8_lossy(data).into_owned().into_boxed_str(),
             }),
             _ => None,

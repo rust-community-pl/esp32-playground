@@ -49,8 +49,8 @@ fn main() -> anyhow::Result<()> {
     display.off();
 
     let (sender, receiver) = mpsc::channel();
-    let mut question_id = Default::default();
-    let mut question_text = Default::default();
+    let mut question_id = String::new();
+    let mut question_text = String::new();
     let mut options: Vec<String> = Default::default();
     let mut selection: u8 = 0;
     let mut battery_level: Option<u8> = Some(0);
@@ -64,6 +64,7 @@ fn main() -> anyhow::Result<()> {
         mqtt::try_until_subscribed(&mut mqtt_client, "question");
         mqtt::try_until_subscribed(&mut mqtt_client, "sleep");
         mqtt::try_until_subscribed(&mut mqtt_client, "winner");
+        mqtt::try_until_subscribed(&mut mqtt_client, "message");
 
         loop {
             let event: DeviceEvent = receiver.recv().unwrap();
@@ -72,6 +73,7 @@ fn main() -> anyhow::Result<()> {
                     display.clear();
                     display.draw_battery_level(battery_level);
                     display.off();
+                    question_id.clear();
                 }
                 DeviceEvent::Question { data } => {
                     display.clear();
@@ -93,6 +95,12 @@ fn main() -> anyhow::Result<()> {
                         display.on();
                         display.draw_text(&format!("You won!\n{}", device_id));
                     }
+                }
+                DeviceEvent::Message { data } => {
+                    display.clear();
+                    display.draw_battery_level(battery_level);
+                    display.draw_text(&String::from(data));
+                    display.on();
                 }
                 DeviceEvent::Select { data } => {
                     selection = data;
