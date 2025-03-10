@@ -1,7 +1,7 @@
 use embedded_svc::mqtt::client::{EventPayload, QoS};
 use esp_idf_svc::mqtt::client::{EspMqttClient, EspMqttConnection, MqttClientConfiguration};
 use esp_idf_svc::sys::esp_crt_bundle_attach;
-use log::info;
+use log::*;
 use std::sync::mpsc;
 use std::thread;
 use std::thread::{sleep, Scope, ScopedJoinHandle};
@@ -37,7 +37,7 @@ pub fn spawn_receiver_thread<'scope>(
             info!("[MQTT] Listening for messages");
             while let Ok(event) = mqtt_connection.next() {
                 let payload = event.payload();
-                info!("[MQTT] {}", payload);
+                debug!("[MQTT] {}", payload);
                 if let EventPayload::Received {
                     id: _,
                     topic,
@@ -51,7 +51,7 @@ pub fn spawn_receiver_thread<'scope>(
                     sleep(Duration::from_millis(500))
                 }
             }
-            info!("[MQTT] Connection closed");
+            error!("[MQTT] Connection closed");
         })
 }
 
@@ -61,7 +61,7 @@ pub fn try_until_subscribed(mqtt_client: &mut EspMqttClient, topic: &str) {
             sleep(Duration::from_millis(500));
             continue;
         }
-        info!("[MQTT] Subscribed to {topic}");
+        debug!("[MQTT] Subscribed to {topic}");
         break;
     }
 }
