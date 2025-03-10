@@ -33,7 +33,7 @@ pub fn spawn_receiver_thread<'scope>(
 ) -> Result<ScopedJoinHandle<'scope, ()>, std::io::Error> {
     thread::Builder::new()
         .stack_size(8192)
-        .spawn_scoped(scope, move || {
+        .spawn_scoped(scope, move || loop {
             info!("[MQTT] Listening for messages");
             while let Ok(event) = mqtt_connection.next() {
                 let payload = event.payload();
