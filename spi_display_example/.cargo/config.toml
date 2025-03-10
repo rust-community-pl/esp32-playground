@@ -3,6 +3,8 @@ target = "xtensa-esp32-espidf"
 
 [target.xtensa-esp32-espidf]
 linker = "ldproxy"
+# Use web-flash on mac instead
+# runner = "web-flash --chip=esp32 "
 runner = "espflash flash --monitor"
 rustflags = [ "--cfg",  "espidf_time64"]
 
