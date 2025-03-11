@@ -1,12 +1,12 @@
 {
-  "name": "mqtt_example",
+  "name": "spi_display_example",
   "build": {
-    "dockerfile": "../Dockerfile",
+    "dockerfile": "Dockerfile",
     "args": {
       "CONTAINER_USER": "esp",
       "CONTAINER_GROUP": "esp",
       "ESP_BOARD": "esp32",
-      "PROJECT_DIR": "/home/esp/mqtt_example",
+      "PROJECT_DIR": "/home/esp/spi_display_example",
     }
   },
   "customizations": {
@@ -42,10 +42,10 @@
     3333,
     8000
   ],
-  "workspaceMount": "source=${localWorkspaceFolder},target=/home/esp/mqtt_example,type=bind,consistency=cached",
-  "workspaceFolder": "/home/esp/mqtt_example",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/home/esp/spi_display_example,type=bind,consistency=cached",
+  "workspaceFolder": "/home/esp/spi_display_example",
   "mounts": [
-    "target=/home/esp/mqtt_example/target,type=volume",
-    "target=/home/esp/mqtt_example/.embuild,type=volume",
+    "target=/home/esp/spi_display_example/target,type=volume",
+    "target=/home/esp/spi_display_example/.embuild,type=volume",
   ],
 }
