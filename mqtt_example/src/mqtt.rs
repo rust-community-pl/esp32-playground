@@ -14,6 +14,7 @@ pub fn configure() -> anyhow::Result<(EspMqttClient<'static>, EspMqttConnection)
     let mqtt_config = MqttClientConfiguration {
         username: Some(MQTT_USER),
         password: Some(MQTT_PASSWORD),
+        // Enable MQTTS (MQTT with TLS)
         crt_bundle_attach: Some(esp_crt_bundle_attach),
         keep_alive_interval: Some(Duration::from_secs(10)),
         reconnect_timeout: Some(Duration::from_secs(10)),
@@ -26,6 +27,7 @@ pub fn configure() -> anyhow::Result<(EspMqttClient<'static>, EspMqttConnection)
     Ok((mqtt_client, mqtt_connection))
 }
 
+/// Spawns a thread, that receives mqtt messages, parses them and sends to mpsc channel.
 pub fn spawn_receiver_thread<'scope>(
     scope: &'scope Scope<'scope, '_>,
     mut mqtt_connection: EspMqttConnection,
@@ -55,6 +57,7 @@ pub fn spawn_receiver_thread<'scope>(
         })
 }
 
+/// Retries subscribing to topic until mqtt connection is established and subscription succeeds.
 pub fn try_until_subscribed(mqtt_client: &mut EspMqttClient, topic: &str) {
     loop {
         if let Err(_e) = mqtt_client.subscribe(topic, QoS::ExactlyOnce) {

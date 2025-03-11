@@ -34,6 +34,8 @@ impl<'controls, SELECT: InputPin, ENTER: InputPin> Controls<'controls, SELECT, E
         })
     }
 
+    /// Spawns a thread that reads key presses,
+    /// transforms them into `DeviceEvent`s and sends to mpsc channel.
     pub fn spawn_thread<'scope>(
         mut self,
         scope: &'scope Scope<'scope, '_>,
@@ -50,6 +52,12 @@ impl<'controls, SELECT: InputPin, ENTER: InputPin> Controls<'controls, SELECT, E
                 let notifier_enter = notification.notifier();
 
                 // Usage of interrupts is currently unsafe.
+                // We have to make sure, notifiers don't outlive the current task (thread).
+                //
+                // We are using notifiers instead of mpsc directly,
+                // as the callback closure inside `subscribe`
+                // is moved into ISR (Interrupt Service Routine),
+                // and the list of allowed APIs there is heavily restricted.
                 unsafe {
                     self.btn_select
                         .subscribe(move || {
@@ -63,6 +71,8 @@ impl<'controls, SELECT: InputPin, ENTER: InputPin> Controls<'controls, SELECT, E
                         .unwrap();
                 }
                 loop {
+                    // We have to re-enable interrupts each time,
+                    // as they are automatically disabled when interrupt happens.
                     self.enable_interrupts().unwrap();
                     let btn_num = notification.wait(delay::BLOCK).unwrap().get();
                     match btn_num {

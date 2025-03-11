@@ -97,6 +97,8 @@ mod capacity_curve {
     }
 }
 
+/// Spawns a thread, that periodically reads battery voltage using ADC,
+/// transforms it into battery level and sends it to mpsc channel.
 pub fn spawn_reader_thread<'scope, T>(
     scope: &'scope Scope<'scope, '_>,
     adc: impl Peripheral<P = T::Adc> + 'scope + Send,
