@@ -23,6 +23,8 @@ use tinybmp::Bmp;
 
 use mipidsi::options::ColorInversion;
 
+// It is important to define display offsets and size so that
+// the image and the text renders correctly on the display
 const DISPLAY_OFFSET: (u16, u16) = (52, 40);
 const DISPLAY_SIZE: (u16, u16) = (135, 240);
 
@@ -33,10 +35,15 @@ fn main() -> Result<(), Box<dyn Error>> {
     let peripherals = Peripherals::take()?;
 
     // Turn on display backlight
+    // GPIO configuration here works simillarly as in C++ coding paradigm
+    // Select the role of the pin (here output)
+    // and then set the pin to the wanted state (here high)
     let mut backlight = PinDriver::output(peripherals.pins.gpio4)?;
     backlight.set_high()?;
 
-    // Configure SPI
+    // Define SPI configuration
+    // Before the initialization the display,
+    // first define the SPI pin configuration
     let config = SpiConfig::new().baudrate(26.MHz().into()).data_mode(MODE_3);
     let spi_device = SpiDeviceDriver::new_single(
         peripherals.spi2,
@@ -55,6 +62,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     );
 
     // Configure display
+    // Here, the display is finally initialized
+    // The device used is ST7789
     let mut delay = Ets;
     let mut display = Builder::new(ST7789, spi_interface)
         .invert_colors(ColorInversion::Inverted)
